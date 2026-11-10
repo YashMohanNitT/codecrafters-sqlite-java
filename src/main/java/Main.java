@@ -23,15 +23,24 @@ public class Main {
           // The page size is the 2 bytes at offset 16 of the header.
           // 00010000 000000000 -> 16 0 in big endian
           // 00000000 000001000 -> 0 16 in little endian
-          System.out.println((((int)fileBytes[16])<<8) + " " + fileBytes[17]);
+          System.err.println((((int)fileBytes[16])<<8) + " " + fileBytes[17]);
 
-          int pageSize = fileBytes[16]<<8 | fileBytes[17];
+          // "& 0xFF" turns a signed Java byte (-128..127) into an unsigned value (0..255).
+          int pageSize = (fileBytes[16] & 0xFF) << 8 | (fileBytes[17] & 0xFF);
+
+          // The file header is 100 bytes. The page header of page 1 starts right after it.
+          // The cell count is the 2-byte big-endian number at bytes 3 and 4 of the page header,
+          // so it is at file offsets 103 and 104.
+          // Each cell is one row of sqlite_schema, and each row is one table.
+          int pageHeaderStart = 100;
+          int cellCount = (fileBytes[pageHeaderStart + 3] & 0xFF) << 8
+              | (fileBytes[pageHeaderStart + 4] & 0xFF);
 
           // You can use print statements as follows for debugging, they'll be visible when running tests.
           System.err.println("Logs from your program will appear here!");
 
-          // TODO: Uncomment the code below to pass the first stage
-           System.out.println("database page size: " + pageSize);
+          System.out.println("database page size: " + pageSize);
+          System.out.println("number of tables: " + cellCount);
         } catch (IOException e) {
           System.out.println("Error reading file: " + e.getMessage());
         }
